@@ -14,8 +14,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-import static assignment.newswebsocket.service.WebSocketService.SOCKET_TOKEN_HEADER;
-
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
@@ -25,6 +23,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public static final String END_POINT = "/ws/news";
     public static final String TOPIC_PREFIX = "/topic";
     public static final String APP_PREFIX = "/app";
+    public static final String SOCKET_TOKEN_HEADER = "SOCKET_TOKEN";
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -44,13 +43,23 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    String clientId = accessor.getFirstNativeHeader(SOCKET_TOKEN_HEADER);
-                    String sessionId = accessor.getSessionId();
-                    newsSession.createSession(clientId, sessionId);
-
+                    connect(accessor);
+                } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+                    disconnect(accessor);
                 }
                 return message;
             }
         });
+    }
+
+    private void connect(StompHeaderAccessor accessor) {
+        String clientId = accessor.getFirstNativeHeader(SOCKET_TOKEN_HEADER);
+        String sessionId = accessor.getSessionId();
+        newsSession.createSession(clientId, sessionId);
+    }
+
+    private void disconnect(StompHeaderAccessor accessor) {
+        String sessionId = accessor.getSessionId();
+        newsSession.removeSession(sessionId);
     }
 }

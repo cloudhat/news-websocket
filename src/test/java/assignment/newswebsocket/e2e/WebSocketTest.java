@@ -1,4 +1,4 @@
-package assignment.newswebsocket.service;
+package assignment.newswebsocket.e2e;
 
 import assignment.newswebsocket.repository.NewsSession;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,11 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.simp.stomp.ConnectionLostException;
-import org.springframework.messaging.simp.stomp.StompHeaders;
-import org.springframework.messaging.simp.stomp.StompSession;
-import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.messaging.converter.StringMessageConverter;
+import org.springframework.messaging.simp.stomp.*;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -21,17 +18,16 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static assignment.newswebsocket.config.WebSocketConfig.END_POINT;
-import static assignment.newswebsocket.service.WebSocketService.SOCKET_TOKEN_HEADER;
+import static assignment.newswebsocket.config.WebSocketConfig.SOCKET_TOKEN_HEADER;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertThrows;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class WebSocketServiceTest {
+class WebSocketTest {
 
     @LocalServerPort
     int port;
@@ -48,7 +44,7 @@ class WebSocketServiceTest {
         SockJsClient sockJsClient = new SockJsClient(transports);
 
         webSocketStompClient = new WebSocketStompClient(sockJsClient);
-        webSocketStompClient.setMessageConverter(new MappingJackson2MessageConverter());
+        webSocketStompClient.setMessageConverter(new StringMessageConverter());
     }
 
     @DisplayName("WebSocket 연결 및 해제 시 NewsSession이 올바르게 업데이트 되는지 테스트")
