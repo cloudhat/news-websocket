@@ -1,27 +1,19 @@
 package assignment.newswebsocket.e2e;
 
 import assignment.newswebsocket.repository.NewsSession;
-import org.junit.jupiter.api.BeforeEach;
+import assignment.newswebsocket.util.WebSocketUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.messaging.converter.StringMessageConverter;
-import org.springframework.messaging.simp.stomp.*;
-import org.springframework.web.socket.WebSocketHttpHeaders;
-import org.springframework.web.socket.client.standard.StandardWebSocketClient;
-import org.springframework.web.socket.messaging.WebSocketStompClient;
-import org.springframework.web.socket.sockjs.client.SockJsClient;
-import org.springframework.web.socket.sockjs.client.Transport;
-import org.springframework.web.socket.sockjs.client.WebSocketTransport;
+import org.springframework.messaging.simp.stomp.ConnectionLostException;
+import org.springframework.messaging.simp.stomp.StompHeaders;
+import org.springframework.messaging.simp.stomp.StompSession;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
 
-import static assignment.newswebsocket.config.WebSocketConfig.END_POINT;
-import static assignment.newswebsocket.config.WebSocketConfig.SOCKET_TOKEN_HEADER;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertThrows;
@@ -35,34 +27,14 @@ class WebSocketTest {
     @Autowired
     private NewsSession newsSession;
 
-    WebSocketStompClient webSocketStompClient;
-
-
-    @BeforeEach
-    void setup() {
-        List<Transport> transports = List.of(new WebSocketTransport(new StandardWebSocketClient()));
-        SockJsClient sockJsClient = new SockJsClient(transports);
-
-        webSocketStompClient = new WebSocketStompClient(sockJsClient);
-        webSocketStompClient.setMessageConverter(new StringMessageConverter());
-    }
-
     @DisplayName("WebSocket 연결 및 해제 시 NewsSession이 올바르게 업데이트 되는지 테스트")
     @Test
     void connectAndDisconnect_ShouldUpdateNewsSession() throws Exception {
         //given
         String clientId = "testClient";
-        StompHeaders connectHeaders = new StompHeaders();
-        connectHeaders.add(SOCKET_TOKEN_HEADER, clientId);
 
         //when
-        StompSession stompSession = webSocketStompClient.connect(
-                "ws://localhost:" + port + END_POINT,
-                new WebSocketHttpHeaders(),        // HTTP Handshake Header
-                connectHeaders,          // STOMP Connect Header
-                new StompSessionHandlerAdapter() {
-                }
-        ).get(1, TimeUnit.SECONDS);
+        StompSession stompSession = WebSocketUtil.getSession(port, clientId);
 
         // polling 방식으로 최대 2초 대기
         await().atMost(Duration.ofSeconds(2))
@@ -81,29 +53,14 @@ class WebSocketTest {
     void duplicatedSession_ShouldThrowException() throws Exception {
         //given
         String clientId = "duplicateClient";
-        StompHeaders connectHeaders = new StompHeaders();
-        connectHeaders.add(SOCKET_TOKEN_HEADER, clientId);
 
-        StompSession session1 = webSocketStompClient.connect(
-                "ws://localhost:" + port + END_POINT,
-                new WebSocketHttpHeaders(),
-                connectHeaders,
-                new StompSessionHandlerAdapter() {
-                }
-        ).get(1, TimeUnit.SECONDS);
-
+        StompSession session1 = WebSocketUtil.getSession(port, clientId);
         await().atMost(Duration.ofSeconds(2))
                 .until(() -> newsSession.isSessionPresent(clientId));
 
         //when & then
         Throwable thrown = assertThrows(ExecutionException.class, () -> {
-            webSocketStompClient.connect(
-                    "ws://localhost:" + port + END_POINT,
-                    new WebSocketHttpHeaders(),
-                    connectHeaders,
-                    new StompSessionHandlerAdapter() {
-                    }
-            ).get(1, TimeUnit.SECONDS);
+            WebSocketUtil.getSession(port, clientId);
         });
 
         assertThat(thrown.getCause())
@@ -119,16 +76,7 @@ class WebSocketTest {
         //given
         String clientId = "testClient";
 
-        StompHeaders connectHeaders = new StompHeaders();
-        connectHeaders.add(SOCKET_TOKEN_HEADER, clientId);
-
-        StompSession session = webSocketStompClient.connect(
-                "ws://localhost:" + port + END_POINT,
-                new WebSocketHttpHeaders(),
-                connectHeaders,
-                new StompSessionHandlerAdapter() {
-                }
-        ).get(1, TimeUnit.SECONDS);
+        StompSession session = WebSocketUtil.getSession(port, clientId);
 
         //when
         StompHeaders heartbeatHeaders = new StompHeaders();

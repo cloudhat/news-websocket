@@ -2,11 +2,13 @@ package assignment.newswebsocket.repository;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import assignment.newswebsocket.constant.CustomException;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Component
 public class NewsInMemorySession implements NewsSession {
 
@@ -25,6 +27,7 @@ public class NewsInMemorySession implements NewsSession {
             socketIdToClientIdMap.put(socketId, clientId);
             clientSessions.put(clientId, socketId);
         } else {
+            log.error("Session already exists for clientId: " + clientId);
             throw new IllegalStateException(CustomException.SOCKET_ALREADY_CONNECTED.getMessage());
         }
     }

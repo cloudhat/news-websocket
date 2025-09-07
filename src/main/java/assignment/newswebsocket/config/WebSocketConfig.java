@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -13,6 +15,8 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -24,6 +28,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public static final String TOPIC_PREFIX = "/topic";
     public static final String APP_PREFIX = "/app";
     public static final String SOCKET_TOKEN_HEADER = "SOCKET_TOKEN";
+
+    @Override
+    public boolean configureMessageConverters(List<MessageConverter> converters) {
+        converters.add(new MappingJackson2MessageConverter());
+        return false;
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -44,7 +54,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     connect(accessor);
-                } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+                }
+                else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
                     disconnect(accessor);
                 }
                 return message;
