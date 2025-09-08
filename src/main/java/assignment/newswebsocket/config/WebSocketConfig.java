@@ -37,7 +37,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint(END_POINT).setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint(END_POINT).setAllowedOriginPatterns("*");
     }
 
     @Override
@@ -63,6 +63,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         });
     }
 
+    //일반적으로 JWT토큰을 헤더에 담아 보내지만, 여기서는 간단히 클라이언트 아이디를 담아 보낸다.
     private void connect(StompHeaderAccessor accessor) {
         String clientId = accessor.getFirstNativeHeader(SOCKET_TOKEN_HEADER);
         String sessionId = accessor.getSessionId();

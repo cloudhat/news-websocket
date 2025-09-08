@@ -35,7 +35,7 @@ public class NewsServiceTest extends IntegrationTest {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-    private String newsId1 = "a1b2c3";
+    private String newsId = "a1b2c3";
 
     @LocalServerPort
     int port;
@@ -43,7 +43,7 @@ public class NewsServiceTest extends IntegrationTest {
     @BeforeEach
     void setGivenData() {
         TranslatedNews news = new TranslatedNews(
-                newsId1,
+                newsId,
                 "Qraft AI Product팀 개발자 채용",
                 "핀테크 스타트업 크래프트 테크놀로지스(QRAFT Technologies)는",
                 LocalDateTime.of(2025, 6, 5, 10, 0, 0)
@@ -85,11 +85,11 @@ public class NewsServiceTest extends IntegrationTest {
         });
 
         //when
-        linkedBlockingQueueListener.receiveNewsId(newsId1);
+        linkedBlockingQueueListener.receiveNewsId(newsId);
 
         //then
         TranslatedNewsResponse message1 = receivedMessages.poll(1, TimeUnit.SECONDS);
-        assertThat(message1.getId()).isEqualTo(newsId1);
+        assertThat(message1.getId()).isEqualTo(newsId);
 
         // finally
         session.disconnect();
