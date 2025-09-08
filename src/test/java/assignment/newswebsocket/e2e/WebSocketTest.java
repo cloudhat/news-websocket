@@ -4,8 +4,8 @@ import assignment.newswebsocket.repository.NewsSession;
 import assignment.newswebsocket.util.WebSocketUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.messaging.simp.stomp.ConnectionLostException;
 import org.springframework.messaging.simp.stomp.StompHeaders;
@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class WebSocketTest {
@@ -24,8 +25,9 @@ class WebSocketTest {
     @LocalServerPort
     int port;
 
-    @Autowired
+    @SpyBean
     private NewsSession newsSession;
+
 
     @DisplayName("WebSocket 연결 및 해제 시 NewsSession이 올바르게 업데이트 되는지 테스트")
     @Test
@@ -86,6 +88,7 @@ class WebSocketTest {
         //then
         await().atMost(Duration.ofSeconds(2))
                 .until(() -> newsSession.isSessionPresent(clientId));
+        verify(newsSession, timeout(2000).times(1)).refreshSession(anyString());
 
         //finally
         session.disconnect();
